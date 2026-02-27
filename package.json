@@ -1,0 +1,24 @@
+{
+  "name": "qwen-code-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local OpenAI-compatible API proxy powered by Qwen OAuth",
+  "type": "module",
+  "bin": {
+    "qwen-code-api": "dist/index.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "check": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.57",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.3"
+  }
+}
