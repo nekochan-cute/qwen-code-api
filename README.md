@@ -1,81 +1,89 @@
 # qwen-code-api
 
-`qwen-code` の OAuth キャッシュ (`~/.qwen/oauth_creds.json`) を使って、ローカルに OpenAI 互換 API (`/v1/*`) を公開するプロキシです。
+[日本語](./README_ja.md)
 
-他のコーダー/エージェントからは通常の OpenAI エンドポイントとして利用できます。
+`qwen-code-api` provides a local OpenAI-compatible endpoint (`/v1/*`) using the OAuth session created by `qwen-code`.
 
-## できること
+You can point other coding tools (Roo Code, Cline, SDKs, etc.) to this server as a standard OpenAI API base URL.
 
-- `GET /healthz` でヘルスチェック
-- `GET /v1/models` / `GET /v1/models/:id` をローカルで提供（`coder-model`, `vision-model`）
-- `ANY /v1/*` を上流の Qwen OpenAI 互換エンドポイントへ透過転送（`/v1/models*` を除く）
-- `resource_url` を OAuth キャッシュから自動解決
-- `access_token` の期限切れ時に `refresh_token` で自動更新して再試行
-- ローカル側 API キー (`Authorization: Bearer <key>`) でアクセス制御
+## qwen-code References
 
-## 前提
+- Official `qwen-code` repository: <https://github.com/QwenLM/qwen-code>
+- `qwen-code` authentication docs: <https://github.com/QwenLM/qwen-code/blob/main/docs/users/configuration/auth.md>
+- This project reads the same OAuth cache file used by `qwen-code`: `~/.qwen/oauth_creds.json`
 
-1. `qwen-code` で OAuth ログイン済みであること
-2. `~/.qwen/oauth_creds.json` が存在すること
+## Features
 
-未ログインの場合は、先に `qwen` を起動して `/auth` を実行してください。
+- `GET /healthz` for liveness checks
+- Local `GET /v1/models` and `GET /v1/models/:id` (`coder-model`, `vision-model`)
+- Transparent proxy for other `/v1/*` requests to Qwen OpenAI-compatible upstream
+- Auto resolve upstream endpoint from OAuth `resource_url`
+- Auto refresh expired `access_token` using `refresh_token` and retry once
+- Local API key guard (`Authorization: Bearer <key>`) for inbound requests
 
-## セットアップ
+## Prerequisites
+
+1. You have logged in via `qwen-code`
+2. `~/.qwen/oauth_creds.json` exists
+
+If not logged in yet, run `qwen` first and complete `/auth`.
+
+## Setup
 
 ```bash
 cd /home/moon/qwen-api/qwen-code-api
 npm install
 ```
 
-## 起動
+## Run
 
 ```bash
 npm run dev -- --port 8787 --api-key my-local-key
 ```
 
-ビルドして起動する場合:
+Build + run:
 
 ```bash
 npm run build
 npm run start -- --port 8787 --api-key my-local-key
 ```
 
-## 他のコーダーから使う
+## Use from Other Coders
 
-接続先を OpenAI 互換として設定します。
+Set your target tool to OpenAI-compatible mode:
 
 ```bash
 export OPENAI_BASE_URL="http://127.0.0.1:8787/v1"
 export OPENAI_API_KEY="my-local-key"
 ```
 
-`curl` 例:
+`curl` example:
 
 ```bash
 curl "http://127.0.0.1:8787/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer my-local-key" \
   -d '{
-    "model": "qwen3-coder-plus",
+    "model": "coder-model",
     "messages": [
       {"role": "user", "content": "hello"}
     ]
   }'
 ```
 
-## 主なオプション
+## Main Options
 
 - `--host` (default: `127.0.0.1`)
 - `--port` (default: `8787`)
-- `--api-key` (未指定時は起動時にランダム生成)
+- `--api-key` (auto-generated if omitted)
 - `--credentials-file` (default: `~/.qwen/oauth_creds.json`)
-- `--upstream-base-url` (`resource_url` を手動上書き)
+- `--upstream-base-url` (manual override for OAuth `resource_url`)
 - `--token-refresh-buffer-ms` (default: `30000`)
 - `--request-timeout-ms` (default: `120000`)
 
-`--help` で一覧を表示できます。
+Run `--help` for the full list.
 
-## 環境変数
+## Environment Variables
 
 - `QWEN_CODE_API_HOST`
 - `QWEN_CODE_API_PORT`
@@ -85,7 +93,7 @@ curl "http://127.0.0.1:8787/v1/chat/completions" \
 - `QWEN_CODE_TOKEN_REFRESH_BUFFER_MS`
 - `QWEN_CODE_API_REQUEST_TIMEOUT_MS`
 
-## セキュリティ注意
+## Security Notes
 
-- 既定の `host=127.0.0.1` はローカル専用です。
-- `0.0.0.0` で公開する場合は、必ず強い API キーとネットワーク制限を併用してください。
+- Default `host=127.0.0.1` is local-only.
+- If you bind to `0.0.0.0`, use a strong API key and network-level restrictions.
